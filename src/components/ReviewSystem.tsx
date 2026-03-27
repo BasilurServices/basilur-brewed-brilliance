@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Star, ThumbsUp, ThumbsDown, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useSearchParams } from "react-router-dom";
 
@@ -140,16 +140,29 @@ const ReviewSystem = () => {
 
             {/* Scroll indicator (inside main content flow) */}
             {!isSubmitted && (
-              <div className="pt-12 sm:pt-20 flex flex-col items-center gap-2">
-                <span className="text-xs font-light tracking-[0.3em] uppercase text-slate-400">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1 }}
+                className="pt-12 sm:pt-20 flex flex-col items-center gap-4"
+              >
+                <motion.span 
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="text-xs font-light tracking-[0.3em] uppercase text-slate-400"
+                >
                   Scroll to Explore
-                </span>
+                </motion.span>
+                
                 <motion.div
-                  className="w-px h-10 bg-gradient-to-b from-tea-gold/50 to-transparent"
-                  animate={{ y: [0, 10, 0] }}
+                  animate={{ y: [0, 8, 0] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
-              </div>
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="w-px h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
+                  <ChevronDown className="w-4 h-4 text-tea-gold/60" />
+                </motion.div>
+              </motion.div>
             )}
           </motion.div>
         )}

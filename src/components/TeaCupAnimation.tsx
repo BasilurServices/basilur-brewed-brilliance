@@ -9,9 +9,10 @@ interface ScrollBeatProps {
   align: "left" | "center" | "right";
   children: React.ReactNode;
   isFirst?: boolean;
+  isLast?: boolean;
 }
 
-const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst }: ScrollBeatProps) => {
+const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLast }: ScrollBeatProps) => {
   const range = end - start;
   const fadeInEnd = start + range * 0.25;
   const fadeOutStart = end - range * 0.25;
@@ -58,6 +59,11 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst }: Sc
     } else {
       finalOpacity = 0;
     }
+  }
+
+  // Push last text higher on desktop to clear the cup
+  if (!isMobile && isLast && scrollProgress >= start) {
+      finalY -= 140;
   }
 
   return (
@@ -274,7 +280,7 @@ const TeaCupAnimation = () => {
         </ScrollBeat>
 
         {/* Beat D: 75–95% */}
-        <ScrollBeat scrollProgress={scrollVal} start={0.75} end={0.95} align="center">
+        <ScrollBeat scrollProgress={scrollVal} start={0.75} end={0.95} align="center" isLast>
           <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             Your Turn
             <br />

@@ -1,16 +1,41 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import TeaCupAnimation from "@/components/TeaCupAnimation";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <main className="bg-tea-void min-h-screen">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-6">
+        <div className="text-foreground font-bold text-lg tracking-[0.15em] uppercase">
+          Basilur
+        </div>
+        <div className="hidden sm:flex items-center gap-8 text-xs tracking-[0.2em] uppercase text-muted-foreground">
+          <span className="hover:text-foreground transition-colors cursor-pointer">Collection</span>
+          <span className="hover:text-foreground transition-colors cursor-pointer">Story</span>
+          <span className="hover:text-foreground transition-colors cursor-pointer">Process</span>
+        </div>
+      </nav>
+
+      {/* Scrollytelling Canvas */}
+      <div data-tea-container>
+        <TeaCupAnimation />
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-tea-void py-20 px-6 sm:px-12">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="text-foreground font-bold text-lg tracking-[0.15em] uppercase">
+            Basilur
+          </div>
+          <p className="text-xs text-muted-foreground tracking-wide">
+            Premium Fresh Tea · Sri Lanka
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            © 2026 Basilur Tea
+          </p>
+        </div>
+      </footer>
+    </main>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;

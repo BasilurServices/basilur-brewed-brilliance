@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 interface Leaf {
@@ -19,7 +19,6 @@ interface Particle {
   life: number;
   maxLife: number;
   size: number;
-  color: string;
   type: "steam" | "gold";
 }
 
@@ -46,11 +45,7 @@ function createLeaves(): Leaf[] {
   }));
 }
 
-function createParticle(
-  cx: number,
-  cy: number,
-  type: "steam" | "gold"
-): Particle {
+function createParticle(cx: number, cy: number, type: "steam" | "gold"): Particle {
   if (type === "steam") {
     return {
       x: cx + (Math.random() - 0.5) * 40,
@@ -60,7 +55,6 @@ function createParticle(
       life: 0,
       maxLife: 80 + Math.random() * 60,
       size: 2 + Math.random() * 3,
-      color: "steam",
       type: "steam",
     };
   }
@@ -72,18 +66,11 @@ function createParticle(
     life: 0,
     maxLife: 120 + Math.random() * 80,
     size: 1 + Math.random() * 2,
-    color: "gold",
     type: "gold",
   };
 }
 
-function drawTeaCup(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  progress: number,
-  scale: number
-) {
+function drawTeaCup(ctx: CanvasRenderingContext2D, cx: number, cy: number, progress: number, scale: number) {
   const cupOpacity = Math.min(1, progress * 5);
   if (cupOpacity <= 0) return;
 
@@ -116,16 +103,16 @@ function drawTeaCup(
   ctx.fillStyle = cupGrad;
   ctx.fill();
 
-  // Cup rim highlight
+  // Cup rim
   ctx.beginPath();
   ctx.ellipse(0, -30, 45, 12, 0, 0, Math.PI * 2);
   ctx.fillStyle = "rgba(35, 65, 40, 0.9)";
   ctx.fill();
 
-  // Tea liquid inside
+  // Tea liquid
+  const teaLiquid = progress > 0.4 ? Math.min(1, (progress - 0.4) * 3.3) : 0;
   ctx.beginPath();
   ctx.ellipse(0, -28, 40, 10, 0, 0, Math.PI * 2);
-  const teaLiquid = progress > 0.4 ? Math.min(1, (progress - 0.4) * 3.3) : 0;
   const teaGrad = ctx.createRadialGradient(0, -28, 5, 0, -28, 40);
   teaGrad.addColorStop(0, `rgba(180, 130, 50, ${teaLiquid * 0.9})`);
   teaGrad.addColorStop(0.6, `rgba(140, 95, 30, ${teaLiquid * 0.8})`);
@@ -151,15 +138,7 @@ function drawTeaCup(
   ctx.restore();
 }
 
-function drawLeaf(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-  rotation: number,
-  color: string,
-  opacity: number
-) {
+function drawLeaf(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, rotation: number, color: string, opacity: number) {
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.translate(x, y);
@@ -168,18 +147,10 @@ function drawLeaf(
   ctx.beginPath();
   ctx.moveTo(0, -size);
   ctx.bezierCurveTo(size * 0.6, -size * 0.6, size * 0.6, size * 0.6, 0, size);
-  ctx.bezierCurveTo(
-    -size * 0.6,
-    size * 0.6,
-    -size * 0.6,
-    -size * 0.6,
-    0,
-    -size
-  );
+  ctx.bezierCurveTo(-size * 0.6, size * 0.6, -size * 0.6, -size * 0.6, 0, -size);
   ctx.fillStyle = color;
   ctx.fill();
 
-  // Leaf vein
   ctx.beginPath();
   ctx.moveTo(0, -size * 0.8);
   ctx.lineTo(0, size * 0.8);
@@ -190,6 +161,64 @@ function drawLeaf(
   ctx.restore();
 }
 
+// ScrollBeat as a standalone component using scroll position
+interface ScrollBeatProps {
+  scrollProgress: number;
+  start: number;
+  end: number;
+  align: "left" | "center" | "right";
+  children: React.ReactNode;
+}
+
+const ScrollBeat = ({ scrollProgress, start, end, align, children }: ScrollBeatProps) => {
+  const range = end - start;
+  const fadeInEnd = start + range * 0.25;
+  const fadeOutStart = end - range * 0.25;
+
+  let opacity = 0;
+  if (scrollProgress >= start && scrollProgress <= end) {
+    if (scrollProgress < fadeInEnd) {
+      opacity = (scrollProgress - start) / (fadeInEnd - start);
+    } else if (scrollProgress > fadeOutStart) {
+      opacity = 1 - (scrollProgress - fadeOutStart) / (end - fadeOutStart);
+    } else {
+      opacity = 1;
+    }
+  }
+
+  let y = 20;
+  if (scrollProgress >= start && scrollProgress <= end) {
+    const mid = (start + end) / 2;
+    if (scrollProgress < mid) {
+      y = 20 * (1 - (scrollProgress - start) / (mid - start));
+    } else {
+      y = -20 * ((scrollProgress - mid) / (end - mid));
+    }
+  } else if (scrollProgress > end) {
+    y = -20;
+  }
+
+  const alignmentClasses: Record<string, string> = {
+    left: "items-start text-left pl-8 sm:pl-16 md:pl-24",
+    center: "items-center text-center",
+    right: "items-end text-right pr-8 sm:pr-16 md:pr-24",
+  };
+
+  return (
+    <div
+      className={`absolute inset-0 flex flex-col justify-center pointer-events-none ${alignmentClasses[align]}`}
+      style={{
+        opacity,
+        transform: `translateY(${y}px)`,
+        transition: "none",
+        willChange: "opacity, transform",
+      }}
+    >
+      <div className="pointer-events-auto">{children}</div>
+    </div>
+  );
+};
+
 const TeaCupAnimation = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -198,6 +227,7 @@ const TeaCupAnimation = () => {
   const particlesRef = useRef<Particle[]>([]);
   const timeRef = useRef(0);
   const progressRef = useRef(0);
+  const [scrollVal, setScrollVal] = useState(0);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -210,16 +240,18 @@ const TeaCupAnimation = () => {
     restDelta: 0.001,
   });
 
-  const scrollIndicatorOpacity = useTransform(
-    smoothProgress,
-    [0, 0.08],
-    [1, 0]
-  );
+  // Track scroll value for text overlays
+  useEffect(() => {
+    const unsubscribe = smoothProgress.on("change", (v) => {
+      progressRef.current = v;
+      setScrollVal(v);
+    });
+    return unsubscribe;
+  }, [smoothProgress]);
 
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -232,14 +264,13 @@ const TeaCupAnimation = () => {
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     const progress = progressRef.current;
     timeRef.current += 0.016;
     const time = timeRef.current;
 
-    // Clear
     ctx.fillStyle = "#050505";
     ctx.fillRect(0, 0, w, h);
 
@@ -247,64 +278,36 @@ const TeaCupAnimation = () => {
     const cy = h / 2 + 20;
     const baseScale = Math.min(w / 800, h / 800) * 1.2;
 
-    // Draw orbiting leaves
+    // Orbiting leaves (behind cup)
     const leafOpacity = Math.min(1, progress * 4);
     const leafSpread = 0.3 + progress * 0.7;
     leavesRef.current.forEach((leaf) => {
       const currentAngle = leaf.angle + time * leaf.speed * leafSpread;
-      const wobbleOffset =
-        Math.sin(time * 1.5 + leaf.phase) * leaf.wobble * leafSpread;
+      const wobbleOffset = Math.sin(time * 1.5 + leaf.phase) * leaf.wobble * leafSpread;
       const currentRadius = (leaf.radius + wobbleOffset) * baseScale;
-      const verticalWobble =
-        Math.sin(time * 0.8 + leaf.phase * 2) * 15 * baseScale;
-
+      const verticalWobble = Math.sin(time * 0.8 + leaf.phase * 2) * 15 * baseScale;
       const lx = cx + Math.cos(currentAngle) * currentRadius;
       const ly = cy + Math.sin(currentAngle) * currentRadius * 0.4 + verticalWobble;
-
-      drawLeaf(
-        ctx,
-        lx,
-        ly,
-        leaf.size * baseScale * 0.8,
-        currentAngle + time * 0.5,
-        leaf.color,
-        leafOpacity * (0.5 + Math.sin(time + leaf.phase) * 0.3)
-      );
+      drawLeaf(ctx, lx, ly, leaf.size * baseScale * 0.8, currentAngle + time * 0.5, leaf.color, leafOpacity * (0.5 + Math.sin(time + leaf.phase) * 0.3));
     });
 
-    // Draw cup
     drawTeaCup(ctx, cx, cy, progress, baseScale);
 
-    // Front leaves (drawn after cup for depth)
+    // Front leaves
     leavesRef.current.slice(0, 4).forEach((leaf) => {
       const currentAngle = leaf.angle + time * leaf.speed * leafSpread + Math.PI;
-      const wobbleOffset =
-        Math.sin(time * 1.5 + leaf.phase) * leaf.wobble * leafSpread;
+      const wobbleOffset = Math.sin(time * 1.5 + leaf.phase) * leaf.wobble * leafSpread;
       const currentRadius = (leaf.radius * 0.7 + wobbleOffset) * baseScale;
-      const verticalWobble =
-        Math.sin(time * 0.8 + leaf.phase * 2) * 10 * baseScale;
-
+      const verticalWobble = Math.sin(time * 0.8 + leaf.phase * 2) * 10 * baseScale;
       const lx = cx + Math.cos(currentAngle) * currentRadius;
-      const ly =
-        cy + Math.sin(currentAngle) * currentRadius * 0.35 + verticalWobble + 20;
-
-      drawLeaf(
-        ctx,
-        lx,
-        ly,
-        leaf.size * baseScale * 0.6,
-        currentAngle + time * 0.3,
-        leaf.color,
-        leafOpacity * 0.4
-      );
+      const ly = cy + Math.sin(currentAngle) * currentRadius * 0.35 + verticalWobble + 20;
+      drawLeaf(ctx, lx, ly, leaf.size * baseScale * 0.6, currentAngle + time * 0.3, leaf.color, leafOpacity * 0.4);
     });
 
-    // Steam particles
+    // Steam
     const steamIntensity = progress > 0.3 ? Math.min(1, (progress - 0.3) * 2.5) : 0;
-    if (steamIntensity > 0) {
-      if (Math.random() < steamIntensity * 0.3) {
-        particlesRef.current.push(createParticle(cx, cy - 40 * baseScale, "steam"));
-      }
+    if (steamIntensity > 0 && Math.random() < steamIntensity * 0.3) {
+      particlesRef.current.push(createParticle(cx, cy - 40 * baseScale, "steam"));
     }
 
     // Gold particles
@@ -312,12 +315,10 @@ const TeaCupAnimation = () => {
       particlesRef.current.push(createParticle(cx, cy, "gold"));
     }
 
-    // Update and draw particles
     particlesRef.current = particlesRef.current.filter((p) => {
       p.life++;
       p.x += p.vx;
       p.y += p.vy;
-
       if (p.life > p.maxLife) return false;
 
       const lifeRatio = p.life / p.maxLife;
@@ -329,10 +330,7 @@ const TeaCupAnimation = () => {
         p.vy -= 0.01;
         p.vx += Math.sin(time * 3 + p.x * 0.01) * 0.02;
         const steamAlpha = alpha * steamIntensity * 0.3;
-        const gradient = ctx.createRadialGradient(
-          p.x, p.y, 0,
-          p.x, p.y, p.size * (1 + lifeRatio * 3)
-        );
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * (1 + lifeRatio * 3));
         gradient.addColorStop(0, `rgba(200, 170, 100, ${steamAlpha})`);
         gradient.addColorStop(1, `rgba(200, 170, 100, 0)`);
         ctx.fillStyle = gradient;
@@ -345,12 +343,7 @@ const TeaCupAnimation = () => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
-
-        // Glow
-        const glow = ctx.createRadialGradient(
-          p.x, p.y, 0,
-          p.x, p.y, p.size * 4
-        );
+        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 4);
         glow.addColorStop(0, `rgba(220, 185, 100, ${goldAlpha * 0.3})`);
         glow.addColorStop(1, `rgba(220, 185, 100, 0)`);
         ctx.fillStyle = glow;
@@ -358,21 +351,16 @@ const TeaCupAnimation = () => {
         ctx.arc(p.x, p.y, p.size * 4, 0, Math.PI * 2);
         ctx.fill();
       }
-
       return true;
     });
 
-    // Keep particle count reasonable
     if (particlesRef.current.length > PARTICLE_COUNT) {
       particlesRef.current = particlesRef.current.slice(-PARTICLE_COUNT);
     }
 
-    // Ambient glow around cup
+    // Ambient glow
     const glowAlpha = 0.03 + progress * 0.05;
-    const ambientGlow = ctx.createRadialGradient(
-      cx, cy, 20 * baseScale,
-      cx, cy, 200 * baseScale
-    );
+    const ambientGlow = ctx.createRadialGradient(cx, cy, 20 * baseScale, cx, cy, 200 * baseScale);
     ambientGlow.addColorStop(0, `rgba(180, 140, 50, ${glowAlpha})`);
     ambientGlow.addColorStop(0.5, `rgba(100, 80, 30, ${glowAlpha * 0.3})`);
     ambientGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -385,28 +373,19 @@ const TeaCupAnimation = () => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = smoothProgress.on("change", (v) => {
-      progressRef.current = v;
-    });
-
     animRef.current = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [render]);
 
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      unsubscribe();
-    };
-  }, [render, smoothProgress]);
+  const scrollIndicatorOpacity = scrollVal < 0.08 ? 1 - scrollVal / 0.08 : 0;
 
   return (
-    <div ref={containerRef} data-tea-container className="relative" style={{ height: "400vh" }}>
+    <div ref={containerRef} className="relative" style={{ height: "400vh" }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-        />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
         {/* Scroll indicator */}
-        <motion.div
+        <div
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
           style={{ opacity: scrollIndicatorOpacity }}
         >
@@ -418,10 +397,10 @@ const TeaCupAnimation = () => {
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
-        </motion.div>
+        </div>
 
-        {/* Beat A: 0-20% */}
-        <ScrollBeat start={0} end={0.2} align="center">
+        {/* Beat A: 0–20% */}
+        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.2} align="center">
           <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-foreground">
             From Leaf
             <br />
@@ -432,8 +411,8 @@ const TeaCupAnimation = () => {
           </p>
         </ScrollBeat>
 
-        {/* Beat B: 25-45% */}
-        <ScrollBeat start={0.25} end={0.45} align="left">
+        {/* Beat B: 25–45% */}
+        <ScrollBeat scrollProgress={scrollVal} start={0.25} end={0.45} align="left">
           <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter text-foreground">
             Hand-Plucked
             <br />
@@ -446,8 +425,8 @@ const TeaCupAnimation = () => {
           </p>
         </ScrollBeat>
 
-        {/* Beat C: 50-70% */}
-        <ScrollBeat start={0.5} end={0.7} align="right">
+        {/* Beat C: 50–70% */}
+        <ScrollBeat scrollProgress={scrollVal} start={0.5} end={0.7} align="right">
           <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter text-foreground">
             The Perfect
             <br />
@@ -460,8 +439,8 @@ const TeaCupAnimation = () => {
           </p>
         </ScrollBeat>
 
-        {/* Beat D: 75-95% */}
-        <ScrollBeat start={0.75} end={0.95} align="center">
+        {/* Beat D: 75–95% */}
+        <ScrollBeat scrollProgress={scrollVal} start={0.75} end={0.95} align="center">
           <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-foreground">
             Your Turn
             <br />
@@ -480,86 +459,6 @@ const TeaCupAnimation = () => {
         </ScrollBeat>
       </div>
     </div>
-  );
-};
-
-interface ScrollBeatProps {
-  start: number;
-  end: number;
-  align: "left" | "center" | "right";
-  children: React.ReactNode;
-}
-
-const ScrollBeat = ({ start, end, align, children }: ScrollBeatProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const { scrollYProgress: windowProgress } = useScroll();
-
-  const smoothWindowProgress = useSpring(windowProgress, {
-    stiffness: 100,
-    damping: 30,
-  });
-
-  const beatOpacity = useTransform(smoothWindowProgress, (v) => {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const currentScroll = v * docHeight;
-    const containerEl = document.querySelector('[data-tea-container]');
-    if (!containerEl) return 0;
-    const containerRect = containerEl.getBoundingClientRect();
-    const containerTop = currentScroll + containerRect.top;
-    const containerHeight = containerEl.scrollHeight - window.innerHeight;
-    const containerProgress = Math.max(0, Math.min(1, (currentScroll - containerTop) / containerHeight));
-    
-    const range = end - start;
-    const fadeInEnd = start + range * 0.25;
-    const fadeOutStart = end - range * 0.25;
-
-    if (containerProgress < start) return 0;
-    if (containerProgress > end) return 0;
-    if (containerProgress < fadeInEnd) {
-      return (containerProgress - start) / (fadeInEnd - start);
-    }
-    if (containerProgress > fadeOutStart) {
-      return 1 - (containerProgress - fadeOutStart) / (end - fadeOutStart);
-    }
-    return 1;
-  });
-
-  const beatY = useTransform(smoothWindowProgress, (v) => {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const currentScroll = v * docHeight;
-    const containerEl = document.querySelector('[data-tea-container]');
-    if (!containerEl) return 20;
-    const containerRect = containerEl.getBoundingClientRect();
-    const containerTop = currentScroll + containerRect.top;
-    const containerHeight = containerEl.scrollHeight - window.innerHeight;
-    const containerProgress = Math.max(0, Math.min(1, (currentScroll - containerTop) / containerHeight));
-    
-    if (containerProgress < start) return 20;
-    if (containerProgress > end) return -20;
-    const mid = (start + end) / 2;
-    if (containerProgress < mid) {
-      const t = (containerProgress - start) / (mid - start);
-      return 20 * (1 - t);
-    }
-    const t = (containerProgress - mid) / (end - mid);
-    return -20 * t;
-  });
-
-  const alignmentClasses = {
-    left: "items-start text-left pl-8 sm:pl-16 md:pl-24",
-    center: "items-center text-center",
-    right: "items-end text-right pr-8 sm:pr-16 md:pr-24",
-  };
-
-  return (
-    <motion.div
-      ref={ref}
-      className={`absolute inset-0 flex flex-col justify-center pointer-events-none ${alignmentClasses[align]}`}
-      style={{ opacity: beatOpacity, y: beatY }}
-    >
-      <div className="pointer-events-auto">{children}</div>
-    </motion.div>
   );
 };
 

@@ -8,9 +8,10 @@ interface ScrollBeatProps {
   end: number;
   align: "left" | "center" | "right";
   children: React.ReactNode;
+  isFirst?: boolean;
 }
 
-const ScrollBeat = ({ scrollProgress, start, end, align, children }: ScrollBeatProps) => {
+const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst }: ScrollBeatProps) => {
   const range = end - start;
   const fadeInEnd = start + range * 0.25;
   const fadeOutStart = end - range * 0.25;
@@ -44,17 +45,34 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children }: ScrollBeatP
     right: "items-end text-right pr-8 sm:pr-16 md:pr-24",
   };
 
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  let finalOpacity = opacity;
+  let finalY = y;
+
+  if (isFirst) {
+    if (scrollProgress < end) {
+      // First text is always visible at start, fades out as we hit beat B
+      finalOpacity = Math.max(0, 1 - (scrollProgress / end) * 1.5);
+      finalY = -(scrollProgress / end) * 50;
+    } else {
+      finalOpacity = 0;
+    }
+  }
+
   return (
     <div
-      className={`absolute inset-0 flex flex-col justify-center pointer-events-none ${alignmentClasses[align]}`}
+      className={`absolute inset-0 flex flex-col pointer-events-none ${
+        isMobile ? "justify-start pt-20 px-6" : "justify-center"
+      } ${alignmentClasses[align]}`}
       style={{
-        opacity,
-        transform: `translateY(${y}px)`,
+        opacity: finalOpacity,
+        transform: `translateY(${finalY}px)`,
         transition: "none",
         willChange: "opacity, transform",
       }}
     >
-      <div className="pointer-events-auto">{children}</div>
+      <div className="pointer-events-auto w-full max-w-[500px]">{children}</div>
     </div>
   );
 };
@@ -77,6 +95,14 @@ const TeaCupAnimation = () => {
   const animRef = useRef<number>(0);
   const progressRef = useRef(0);
   const [scrollVal, setScrollVal] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -128,8 +154,9 @@ const TeaCupAnimation = () => {
       Math.floor(sequenceProgress * FRAME_COUNT)
     );
     const img = images[frameIndex];
+    const isMobileUI = w < 768;
 
-    if (progress > 0.2 && img && img.complete) {
+    if ((progress > 0.2 || isMobileUI) && img && img.complete) {
       const imgW = img.width;
       const imgH = img.height;
       const imgRatio = imgW / imgH;
@@ -147,15 +174,38 @@ const TeaCupAnimation = () => {
       // Optimize for mobile: Reduce scale on narrow screens to prevent the subject (tea cup) 
       // from being too zoomed in. Since image BG is white, it blends with canvas.
       const isMobile = w < 768;
-      const mobileScale = 0.65; // Adjust this to control how "zoomed out" the cup looks on mobile
+      const mobileScale = 0.55; 
       const finalScale = isMobile ? mobileScale : 1.0;
       
       const scaledW = drawW * finalScale;
       const scaledH = drawH * finalScale;
 
       ctx.save();
-      ctx.translate(w / 2, h / 2);
+      if (isMobileUI) {
+        // Anchor to bottom on mobile, with smooth slide-in from bottom at start
+        let slideOffset = 0;
+        if (progress < 0.2) {
+          // Slide up from 20% viewport height below position to join sections better
+          slideOffset = (1 - progress / 0.2) * (h * 0.2); 
+        }
+        ctx.translate(w / 2, h - (scaledH / 2) + slideOffset); 
+      } else {
+        ctx.translate(w / 2, h / 2);
+      }
+      
       ctx.drawImage(img, -scaledW / 2, -scaledH / 2, scaledW, scaledH);
+
+      if (isMobile) {
+        // Add white gradient overlay at the top of the image to feather it
+        const gradientHeight = scaledH * 0.6; 
+        const gradient = ctx.createLinearGradient(0, -scaledH / 2, 0, -scaledH / 2 + gradientHeight);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+        gradient.addColorStop(0.3, "rgba(255, 255, 255, 1)");
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(-scaledW / 2 - 1, -scaledH / 2 - 1, scaledW + 2, gradientHeight + 1);
+      }
       ctx.restore();
     }
 
@@ -167,55 +217,42 @@ const TeaCupAnimation = () => {
     return () => cancelAnimationFrame(animRef.current);
   }, [render]);
 
-  const scrollIndicatorOpacity = scrollVal < 0.08 ? 1 - scrollVal / 0.08 : 0;
 
   return (
     <div ref={containerRef} className="relative" style={{ height: "400vh" }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
-        {/* Initial White Window Fade-out */}
-        <motion.div
-          className="fixed inset-0 bg-white z-[60] pointer-events-none"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: "easeInOut", delay: 0.5 }}
-        />
-
-        {/* Scroll indicator */}
-        <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-          style={{ opacity: scrollIndicatorOpacity }}
-        >
-          <span className="text-sm font-light tracking-[0.3em] uppercase text-muted-foreground">
-            Scroll to Explore
-          </span>
+        {/* Initial White Window Fade-out (Desktop Only) */}
+        {!isMobile && (
           <motion.div
-            className="w-px h-8 bg-gradient-to-b from-primary/50 to-transparent"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="fixed inset-0 bg-white z-[60] pointer-events-none"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut", delay: 0.5 }}
           />
-        </div>
+        )}
 
-        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.2} align="center">
-          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-slate-900">
+
+        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.2} align="center" isFirst>
+          <h1 className="text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             From Leaf
             <br />
             <span className="text-tea-gold">to Cup</span>
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-md mx-auto">
+          <p className="mt-4 text-sm sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
             Experience tea at its freshest
           </p>
         </ScrollBeat>
 
         {/* Beat B: 25–45% */}
-        <ScrollBeat scrollProgress={scrollVal} start={0.25} end={0.45} align="left">
-          <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter text-slate-900">
+        <ScrollBeat scrollProgress={scrollVal} start={0.25} end={0.45} align={window.innerWidth < 768 ? "center" : "left"}>
+          <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             Hand-Plucked
             <br />
             <span className="text-tea-gold">Freshness</span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-sm">
+          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-sm mx-auto">
             Leaves harvested in Baddegama,
             <br />
             same-day processed
@@ -223,13 +260,13 @@ const TeaCupAnimation = () => {
         </ScrollBeat>
 
         {/* Beat C: 50–70% */}
-        <ScrollBeat scrollProgress={scrollVal} start={0.5} end={0.7} align="right">
-          <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter text-slate-900">
+        <ScrollBeat scrollProgress={scrollVal} start={0.5} end={0.7} align={window.innerWidth < 768 ? "center" : "right"}>
+          <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             The Perfect
             <br />
             <span className="text-tea-gold">Pour</span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-sm ml-auto">
+          <p className={`mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-sm ${window.innerWidth < 768 ? "mx-auto" : "ml-auto"}`}>
             Every cup delivered
             <br />
             within 72 hours
@@ -238,12 +275,12 @@ const TeaCupAnimation = () => {
 
         {/* Beat D: 75–95% */}
         <ScrollBeat scrollProgress={scrollVal} start={0.75} end={0.95} align="center">
-          <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-slate-900">
+          <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             Your Turn
             <br />
             <span className="text-tea-gold">to Taste</span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-md mx-auto">
+          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
             Scan, sip, and share your review
           </p>
           <motion.button

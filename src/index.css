@@ -89,6 +89,6 @@
   }
 
   .bg-tea-void {
-    background-color: #ffffff;
+    @apply bg-background;
   }
 }

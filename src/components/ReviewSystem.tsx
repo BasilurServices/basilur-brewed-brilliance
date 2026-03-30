@@ -17,26 +17,32 @@ const ReviewSystem = () => {
   // Always visible in Hero section
   useEffect(() => {
     setIsVisible(true);
-  }, []);
+    console.log("ReviewSystem v3: Component initialized. Batch ID:", batch_id);
+  }, [batch_id]);
 
   const handleSubmit = async () => {
     if (rating === null || recommended === null) return;
 
+    console.log("ReviewSystem v3: Submitting review...", { batch_id, rating, recommended });
     // Instant success state (as per UX rules)
     setIsSubmitted(true);
 
     // Behind the scenes submission
     try {
       const { error } = await supabase.from("reviews").insert([
-        {
-          batch_id,
-          rating,
-          recommended,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+          {
+            batch_id,
+            rating,
+            recommended,
+          },
+        ]);
       if (error) {
-        console.error("Error submitting review:", error);
+        console.error("Error submitting review:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
       }
     } catch (e) {
       console.error("Submission failed:", e);
@@ -84,7 +90,7 @@ const ReviewSystem = () => {
                     className={`w-10 h-10 sm:w-14 sm:h-14 transition-colors duration-200 ${
                       (hoverRating || rating || 0) >= star
                         ? "fill-yellow-400 text-yellow-400"
-                        : "text-slate-200"
+                        : "text-slate-300 hover:text-slate-400"
                     }`}
                   />
                   {(hoverRating || rating || 0) >= star && (
@@ -98,13 +104,13 @@ const ReviewSystem = () => {
             </div>
 
             {/* Recommendation Toggle */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full max-w-sm sm:max-w-none">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full">
               <button
                 onClick={() => setRecommended(true)}
                 className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 rounded-full border transition-all duration-300 ${
                   recommended === true
                     ? "bg-green-50 border-green-200 text-green-600 shadow-sm"
-                    : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
+                    : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
                 }`}
               >
                 <ThumbsUp className="w-5 h-5" />
@@ -115,7 +121,7 @@ const ReviewSystem = () => {
                 className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 sm:px-10 sm:py-5 rounded-full border transition-all duration-300 ${
                   recommended === false
                     ? "bg-red-50 border-red-200 text-red-600 shadow-sm"
-                    : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
+                    : "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300"
                 }`}
               >
                 <ThumbsDown className="w-5 h-5" />
@@ -132,38 +138,36 @@ const ReviewSystem = () => {
               className={`mt-4 sm:mt-10 px-12 py-4 sm:px-16 sm:py-5 rounded-full font-bold uppercase tracking-widest transition-all duration-500 w-full sm:w-auto ${
                 isButtonEnabled
                   ? "bg-slate-900 text-white shadow-lg opacity-100 cursor-pointer hover:bg-slate-800"
-                  : "bg-slate-100 text-slate-300 cursor-not-allowed opacity-50"
+                  : "bg-slate-100 text-slate-500 cursor-not-allowed opacity-50 border border-slate-200"
               }`}
             >
               Submit Feedback
             </motion.button>
 
-            {/* Scroll indicator (inside main content flow) */}
-            {!isSubmitted && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1 }}
-                className="pt-12 sm:pt-20 flex flex-col items-center gap-4"
+            {/* Scroll indicator (opening page) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.8 }}
+              className="pt-8 sm:pt-20 flex flex-col items-center gap-4"
+            >
+              <motion.span 
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[10px] sm:text-xs font-semibold tracking-[0.3em] uppercase text-slate-600"
               >
-                <motion.span 
-                  animate={{ opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="text-xs font-light tracking-[0.3em] uppercase text-slate-400"
-                >
-                  Scroll to Explore
-                </motion.span>
-                
-                <motion.div
-                  animate={{ y: [0, 8, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className="w-px h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
-                  <ChevronDown className="w-4 h-4 text-tea-gold/60" />
-                </motion.div>
+                Scroll to Explore
+              </motion.span>
+              
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="flex flex-col items-center gap-2"
+              >
+                <div className="w-px h-8 sm:h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
+                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-tea-gold/60" />
               </motion.div>
-            )}
+            </motion.div>
           </motion.div>
         )}
 
@@ -188,6 +192,31 @@ const ReviewSystem = () => {
             <h3 className="text-3xl font-bold tracking-tight text-slate-900">
               Thank you for your feedback
             </h3>
+
+            {/* Added Scroll to Explore wording here as well */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="pt-8 sm:pt-16 flex flex-col items-center gap-4"
+            >
+              <motion.span 
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[10px] sm:text-xs font-semibold tracking-[0.3em] uppercase text-slate-600"
+              >
+                Scroll to Explore
+              </motion.span>
+              
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="flex flex-col items-center gap-2"
+              >
+                <div className="w-px h-8 sm:h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
+                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-tea-gold/60" />
+              </motion.div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

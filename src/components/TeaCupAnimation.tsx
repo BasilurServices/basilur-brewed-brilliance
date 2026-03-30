@@ -246,7 +246,7 @@ const TeaCupAnimation = () => {
             <br />
             <span className="text-tea-gold">to Cup</span>
           </h1>
-          <p className="mt-4 text-sm sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
+          <p className="mt-4 text-sm sm:text-lg text-slate-600 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
             Experience tea at its freshest
           </p>
         </ScrollBeat>
@@ -258,7 +258,7 @@ const TeaCupAnimation = () => {
             <br />
             <span className="text-tea-gold">Freshness</span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-sm mx-auto">
+          <p className="mt-4 text-base sm:text-lg text-slate-600 font-light tracking-wide max-w-[280px] sm:max-w-sm mx-auto">
             Leaves harvested in Baddegama,
             <br />
             same-day processed
@@ -272,7 +272,7 @@ const TeaCupAnimation = () => {
             <br />
             <span className="text-tea-gold">Pour</span>
           </h2>
-          <p className={`mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-sm ${window.innerWidth < 768 ? "mx-auto" : "ml-auto"}`}>
+          <p className={`mt-4 text-base sm:text-lg text-slate-600 font-light tracking-wide max-w-[280px] sm:max-w-sm ${window.innerWidth < 768 ? "mx-auto" : "ml-auto"}`}>
             Every cup delivered
             <br />
             within 72 hours
@@ -286,7 +286,7 @@ const TeaCupAnimation = () => {
             <br />
             <span className="text-tea-gold">to Taste</span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-500 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
+          <p className="mt-4 text-base sm:text-lg text-slate-600 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
             Scan, sip, and share your review
           </p>
           <motion.button

@@ -15,11 +15,19 @@ const ReviewSystem = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [location, setLocation] = useState<{city?: string, region?: string, country_name?: string, ip?: string} | null>(null);
+  const [scrollOpacity, setScrollOpacity] = useState(1);
 
   // Always visible in Hero section
   useEffect(() => {
     setIsVisible(true);
     console.log("ReviewSystem v3: Component initialized. Batch ID:", batch_id);
+
+    const handleScroll = () => {
+      // Fades out within 200px of scrolling
+      const opacity = Math.max(0, 1 - (window.scrollY / 200));
+      setScrollOpacity(opacity);
+    };
+    window.addEventListener("scroll", handleScroll);
 
     // Fetch approximate location (IP-based)
     const fetchLocation = async () => {
@@ -35,6 +43,8 @@ const ReviewSystem = () => {
       }
     };
     fetchLocation();
+    
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [batch_id]);
 
   const handleSubmit = async () => {
@@ -86,7 +96,7 @@ const ReviewSystem = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-xl flex flex-col items-center space-y-6 sm:space-y-10 pb-32 sm:pb-40"
+            className="w-full max-w-xl flex flex-col items-center space-y-6 sm:space-y-10 pb-44 sm:pb-48"
           >
             {/* Title */}
             <h1 className="text-3xl sm:text-7xl font-bold tracking-tight text-slate-900 text-center leading-tight">
@@ -170,8 +180,11 @@ const ReviewSystem = () => {
         )}
 
         {/* Unified Scroll Indicator - outside the flex flow to stay at bottom */}
-        {isVisible && (
-          <div className="absolute bottom-20 sm:bottom-10 left-1/2 -translate-x-1/2 z-10 pb-[env(safe-area-inset-bottom)]">
+        {isVisible && scrollOpacity > 0 && (
+          <div 
+            className="fixed bottom-12 sm:bottom-10 left-1/2 -translate-x-1/2 z-10 pb-[env(safe-area-inset-bottom)] pointer-events-none"
+            style={{ opacity: scrollOpacity }}
+          >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

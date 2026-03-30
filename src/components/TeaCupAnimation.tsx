@@ -52,17 +52,31 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
   let finalY = y;
   let finalScale = 1;
 
-  if (isFirst) {
-    if (scrollProgress < end) {
-      // First text is always visible at start, fades out as it moves up
-      finalOpacity = Math.max(0, 1 - (scrollProgress / end));
-      if (isMobile) {
-        // Starts large in middle, scales down and moves up
+  if (isMobile) {
+    if (isFirst) {
+      if (scrollProgress < end) {
+        // Hero text starts large and centered, then moves up and shrinks
+        finalOpacity = Math.max(0, 1 - (scrollProgress / end));
         finalScale = 1.25 - (scrollProgress / end) * 0.25; 
         finalY = -(scrollProgress / end) * 100;
       } else {
-        finalY = -(scrollProgress / end) * 50;
+        finalOpacity = 0;
       }
+    } else if (scrollProgress >= start && scrollProgress <= end) {
+      // Non-hero beats: Zoom in (large to normal) and Zoom out (normal to small)
+      if (scrollProgress < fadeInEnd) {
+        finalScale = 1.25 - (opacity * 0.25); 
+      } else if (scrollProgress > fadeOutStart) {
+        finalScale = 1.0 - ((1 - opacity) * 0.25);
+      } else {
+        finalScale = 1.0;
+      }
+    }
+  } else if (isFirst) {
+    if (scrollProgress < end) {
+      // First text is always visible at start, fades out as it moves up
+      finalOpacity = Math.max(0, 1 - (scrollProgress / end));
+      finalY = -(scrollProgress / end) * 50;
     } else {
       finalOpacity = 0;
     }
@@ -77,7 +91,7 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
     <div
       className={`absolute inset-0 flex flex-col pointer-events-none ${
         isMobile 
-          ? (isFirst ? "justify-center px-6" : "justify-start pt-20 px-6") 
+          ? (isFirst ? "justify-center px-6" : "justify-start pt-44 px-6") 
           : "justify-center"
       } ${alignmentClasses[align]}`}
       style={{

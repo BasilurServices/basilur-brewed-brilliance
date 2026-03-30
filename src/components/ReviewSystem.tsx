@@ -76,7 +76,7 @@ const ReviewSystem = () => {
   return (
     <section 
       id="review-section"
-      className="relative px-4 overflow-hidden flex flex-col items-center justify-center min-h-screen"
+      className="relative px-4 overflow-hidden flex flex-col items-center justify-center min-h-screen min-h-[100dvh]"
       style={{ backgroundColor: "transparent" }}
     >
       <AnimatePresence>
@@ -171,7 +171,7 @@ const ReviewSystem = () => {
 
         {/* Unified Scroll Indicator - outside the flex flow to stay at bottom */}
         {isVisible && (
-          <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-10">
+          <div className="absolute bottom-20 sm:bottom-10 left-1/2 -translate-x-1/2 z-10 pb-[env(safe-area-inset-bottom)]">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

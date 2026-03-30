@@ -50,12 +50,19 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
 
   let finalOpacity = opacity;
   let finalY = y;
+  let finalScale = 1;
 
   if (isFirst) {
     if (scrollProgress < end) {
-      // First text is always visible at start, fades out as we hit beat B
+      // First text is always visible at start, fades out as it moves up
       finalOpacity = Math.max(0, 1 - (scrollProgress / end));
-      finalY = -(scrollProgress / end) * 50;
+      if (isMobile) {
+        // Starts large in middle, scales down and moves up
+        finalScale = 1.25 - (scrollProgress / end) * 0.25; 
+        finalY = -(scrollProgress / end) * 100;
+      } else {
+        finalY = -(scrollProgress / end) * 50;
+      }
     } else {
       finalOpacity = 0;
     }
@@ -69,13 +76,15 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
   return (
     <div
       className={`absolute inset-0 flex flex-col pointer-events-none ${
-        isMobile ? "justify-start pt-20 px-6" : "justify-center"
+        isMobile 
+          ? (isFirst ? "justify-center px-6" : "justify-start pt-20 px-6") 
+          : "justify-center"
       } ${alignmentClasses[align]}`}
       style={{
         opacity: finalOpacity,
-        transform: `translateY(${finalY}px)`,
+        transform: `translateY(${finalY}px) scale(${finalScale})`,
         transition: "none",
-        willChange: "opacity, transform",
+        willChange: "opacity, transform, scale",
       }}
     >
       <div className="pointer-events-auto w-full max-w-[500px]">{children}</div>
@@ -241,7 +250,7 @@ const TeaCupAnimation = () => {
 
 
         <ScrollBeat scrollProgress={scrollVal} start={0} end={0.3} align="center" isFirst>
-          <h1 className="text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
+          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             From Leaf
             <br />
             <span className="text-tea-gold">to Cup</span>
@@ -289,13 +298,20 @@ const TeaCupAnimation = () => {
           <p className="mt-4 text-base sm:text-lg text-slate-600 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
             Scan, sip, and share your review
           </p>
-          <motion.button
-            className="mt-8 px-8 py-3 bg-primary text-primary-foreground font-medium tracking-wide rounded-full text-sm hover:brightness-110 transition-all"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
+          <a 
+            href="https://www.basilurtea.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-8"
           >
-            Explore Collection
-          </motion.button>
+            <motion.button
+              className="px-8 py-3 bg-primary text-primary-foreground font-medium tracking-wide rounded-full text-sm hover:brightness-110 transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Explore Collection
+            </motion.button>
+          </a>
         </ScrollBeat>
       </div>
     </div>

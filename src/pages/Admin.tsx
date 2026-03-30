@@ -217,19 +217,19 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-border px-6 sm:px-12 py-5 flex items-center justify-between">
+      <header className="border-b border-border px-6 sm:px-12 pt-8 pb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-amber-400/15 flex items-center justify-center">
             <BarChart3 className="w-4 h-4 text-amber-400" />
           </div>
           <div>
-            <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">Basilur</p>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-medium opacity-80">Basilur</p>
             <p className="text-sm font-semibold text-foreground leading-tight">Review Analytics</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <span className="hidden sm:inline text-xs tracking-widest uppercase text-muted-foreground font-medium">Admin</span>
+          <span className="hidden sm:inline text-[10px] tracking-widest uppercase text-muted-foreground font-medium opacity-80">Admin</span>
         </div>
       </header>
 

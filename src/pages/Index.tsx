@@ -18,13 +18,13 @@ const Index = () => {
   return (
     <main className="bg-white min-h-screen min-h-[100dvh] relative">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-6">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 pt-8 pb-6">
         <img 
           src="/logo.png" 
           alt="Basilur Logo" 
-          className="h-10 sm:h-14 w-auto object-contain" 
+          className="h-8 sm:h-11 w-auto object-contain" 
         />
-        <div className="hidden sm:flex items-center gap-8 text-xs tracking-[0.2em] uppercase text-slate-600 font-medium">
+        <div className="hidden sm:flex items-center gap-8 text-[11px] tracking-[0.2em] uppercase text-slate-600 font-medium">
           <a 
             href="https://www.basilurtea.com/collections/leaf-of-ceylon" 
             target="_blank" 
@@ -38,7 +38,7 @@ const Index = () => {
               const element = document.querySelector('[data-tea-container]');
               element?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="hover:text-slate-900 transition-colors cursor-pointer uppercase tracking-[0.2em]"
+            className="hover:text-slate-900 transition-colors cursor-pointer uppercase tracking-[0.2em] text-[11px]"
           >
             Story
           </button>

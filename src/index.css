@@ -89,22 +89,14 @@
     overflow-x: hidden;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 4px;
+  /* Hide scrollbar globally for immersive scrollytelling */
+  * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 
-  ::-webkit-scrollbar-track {
-    background: #ffffff;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 20%);
-    border-radius: 2px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(43 80% 55% / 0.4);
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }
 

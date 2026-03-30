@@ -12,15 +12,18 @@ interface ScrollBeatProps {
   isLast?: boolean;
 }
 
-const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLast }: ScrollBeatProps) => {
+export const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLast }: ScrollBeatProps) => {
   const range = end - start;
   const fadeInEnd = start + range * 0.25;
   const fadeOutStart = end - range * 0.25;
 
   let opacity = 0;
-  if (scrollProgress >= start && scrollProgress <= end) {
+  if (scrollProgress >= start && (isLast || scrollProgress <= end)) {
     if (scrollProgress < fadeInEnd) {
       opacity = (scrollProgress - start) / (fadeInEnd - start);
+    } else if (isLast && scrollProgress > fadeOutStart) {
+      // Keep last beat visible as we reach the footer
+      opacity = 1;
     } else if (scrollProgress > fadeOutStart) {
       opacity = 1 - (scrollProgress - fadeOutStart) / (end - fadeOutStart);
     } else {
@@ -55,17 +58,26 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
   if (isMobile) {
     if (isFirst) {
       if (scrollProgress < end) {
-        // Hero text starts large and centered, then moves up and shrinks
-        finalOpacity = Math.max(0, 1 - (scrollProgress / end));
+        // Immediate fade-in (5% of range)
+        const heroFadeInEnd = end * 0.05; 
+        if (scrollProgress < heroFadeInEnd) {
+          finalOpacity = Math.min(1, scrollProgress / heroFadeInEnd);
+        } else {
+          finalOpacity = Math.max(0, 1 - ((scrollProgress - (end*0.4)) / (end*0.6)));
+        }
+        
         finalScale = 1.25 - (scrollProgress / end) * 0.25; 
-        finalY = -(scrollProgress / end) * 100;
+        finalY = -80 - (scrollProgress / end) * 100;
       } else {
         finalOpacity = 0;
       }
-    } else if (scrollProgress >= start && scrollProgress <= end) {
+    } else if (scrollProgress >= start && (isLast || scrollProgress <= end)) {
       // Non-hero beats: Zoom in (large to normal) and Zoom out (normal to small)
       if (scrollProgress < fadeInEnd) {
         finalScale = 1.25 - (opacity * 0.25); 
+      } else if (isLast && scrollProgress > fadeOutStart) {
+        // Keep last beat at normal scale
+        finalScale = 1.0;
       } else if (scrollProgress > fadeOutStart) {
         finalScale = 1.0 - ((1 - opacity) * 0.25);
       } else {
@@ -74,8 +86,14 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
     }
   } else if (isFirst) {
     if (scrollProgress < end) {
-      // First text is always visible at start, fades out as it moves up
-      finalOpacity = Math.max(0, 1 - (scrollProgress / end));
+      // Desktop Hero: Immediate fade-in
+      const heroFadeInEnd = end * 0.05;
+      if (scrollProgress < heroFadeInEnd) {
+        finalOpacity = Math.min(1, scrollProgress / heroFadeInEnd);
+      } else {
+        finalOpacity = Math.max(0, 1 - ((scrollProgress - (end*0.4)) / (end*0.6)));
+      }
+      
       finalY = -(scrollProgress / end) * 50;
     } else {
       finalOpacity = 0;
@@ -86,10 +104,11 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
   if (!isMobile && isLast && scrollProgress >= start) {
       finalY -= 140;
   }
+  const isAtEnd = isLast && scrollProgress > start;
 
   return (
     <div
-      className={`absolute inset-0 flex flex-col pointer-events-none ${
+      className={`${isAtEnd ? "fixed" : "absolute"} inset-0 flex flex-col pointer-events-none ${
         isMobile 
           ? (isFirst ? "justify-center px-6" : "justify-start pt-44 px-6") 
           : "justify-center"
@@ -224,17 +243,29 @@ const TeaCupAnimation = () => {
       
       ctx.drawImage(img, -scaledW / 2, -scaledH / 2, scaledW, scaledH);
 
-      if (isMobile) {
-        // Add white gradient overlay at the top of the image to feather it
-        const gradientHeight = scaledH * 0.6; 
-        const gradient = ctx.createLinearGradient(0, -scaledH / 2, 0, -scaledH / 2 + gradientHeight);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-        gradient.addColorStop(0.3, "rgba(255, 255, 255, 1)");
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(-scaledW / 2 - 1, -scaledH / 2 - 1, scaledW + 2, gradientHeight + 1);
+      // Top Feather (Subtle blend for top overlay)
+      const topGradHeight = scaledH * 0.15; // Reduced from 0.45
+      const topGrad = ctx.createLinearGradient(0, -scaledH / 2, 0, -scaledH / 2 + topGradHeight);
+      topGrad.addColorStop(0, "rgba(255, 255, 255, 1)");
+      topGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(-scaledW / 2 - 2, -scaledH / 2 - 2, scaledW + 4, topGradHeight + 4);
+
+      // Bottom Feather (Only appears at the very end to soften footer transition)
+      // Starts appearing earlier to ensure no sharp edge is visible
+      const bottomFeatherTrigger = 0.85;
+      const bottomFeatherFactor = Math.max(0, (sequenceProgress - bottomFeatherTrigger) / (1 - bottomFeatherTrigger));
+      
+      const bottomGradHeight = (scaledH * 0.25) * bottomFeatherFactor;
+      if (bottomGradHeight > 0) {
+        const bottomGrad = ctx.createLinearGradient(0, scaledH / 2, 0, scaledH / 2 - bottomGradHeight);
+        bottomGrad.addColorStop(0, "rgba(255, 255, 255, 1)");
+        bottomGrad.addColorStop(0.6, "rgba(255, 255, 255, 0.8)");
+        bottomGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.fillStyle = bottomGrad;
+        ctx.fillRect(-scaledW / 2 - 2, scaledH / 2 - bottomGradHeight, scaledW + 4, bottomGradHeight + 4);
       }
+
       ctx.restore();
     }
 
@@ -262,8 +293,7 @@ const TeaCupAnimation = () => {
           />
         )}
 
-
-        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.3} align="center" isFirst>
+        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.2} align="center" isFirst>
           <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             From Leaf
             <br />
@@ -302,31 +332,7 @@ const TeaCupAnimation = () => {
           </p>
         </ScrollBeat>
 
-        {/* Beat D: 75–95% */}
-        <ScrollBeat scrollProgress={scrollVal} start={0.75} end={0.95} align="center" isLast>
-          <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
-            Your Turn
-            <br />
-            <span className="text-tea-gold">to Taste</span>
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-600 font-light tracking-wide max-w-[280px] sm:max-w-md mx-auto">
-            Scan, sip, and share your review
-          </p>
-          <a 
-            href="https://www.basilurtea.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block mt-8"
-          >
-            <motion.button
-              className="px-8 py-3 bg-primary text-primary-foreground font-medium tracking-wide rounded-full text-sm hover:brightness-110 transition-all"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Explore Collection
-            </motion.button>
-          </a>
-        </ScrollBeat>
+        {/* Last beat removed from here - now handled globally in Index.tsx for perfect locking */}
       </div>
     </div>
   );

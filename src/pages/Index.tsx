@@ -3,16 +3,16 @@ import ReviewSystem from "@/components/ReviewSystem";
 
 const Index = () => {
   return (
-    <main className="bg-white min-h-screen relative">
+    <main className="bg-background min-h-screen relative text-foreground">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-6">
-        <div className="text-slate-900 font-extrabold text-base sm:text-lg tracking-[0.2em] uppercase">
+        <div className="text-foreground font-extrabold text-base sm:text-lg tracking-[0.2em] uppercase">
           Basilur
         </div>
-        <div className="hidden sm:flex items-center gap-8 text-xs tracking-[0.2em] uppercase text-slate-600">
-          <span className="hover:text-slate-900 transition-colors cursor-pointer">Collection</span>
-          <span className="hover:text-slate-900 transition-colors cursor-pointer">Story</span>
-          <span className="hover:text-slate-900 transition-colors cursor-pointer">Process</span>
+        <div className="hidden sm:flex items-center gap-8 text-xs tracking-[0.2em] uppercase text-muted-foreground">
+          <span className="hover:text-foreground transition-colors cursor-pointer">Collection</span>
+          <span className="hover:text-foreground transition-colors cursor-pointer">Story</span>
+          <span className="hover:text-foreground transition-colors cursor-pointer">Process</span>
         </div>
       </nav>
 
@@ -25,7 +25,7 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white py-20 px-6 sm:px-12 border-t border-slate-100">
+      <footer className="bg-background py-20 px-6 sm:px-12 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="text-foreground font-bold text-lg tracking-[0.15em] uppercase">
             Basilur

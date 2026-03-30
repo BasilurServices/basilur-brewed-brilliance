@@ -54,7 +54,7 @@ const ScrollBeat = ({ scrollProgress, start, end, align, children, isFirst, isLa
   if (isFirst) {
     if (scrollProgress < end) {
       // First text is always visible at start, fades out as we hit beat B
-      finalOpacity = Math.max(0, 1 - (scrollProgress / end) * 1.5);
+      finalOpacity = Math.max(0, 1 - (scrollProgress / end));
       finalY = -(scrollProgress / end) * 50;
     } else {
       finalOpacity = 0;
@@ -240,7 +240,7 @@ const TeaCupAnimation = () => {
         )}
 
 
-        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.2} align="center" isFirst>
+        <ScrollBeat scrollProgress={scrollVal} start={0} end={0.3} align="center" isFirst>
           <h1 className="text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-slate-900 leading-[0.9]">
             From Leaf
             <br />

@@ -7,23 +7,40 @@ import { useSearchParams } from "react-router-dom";
 const ReviewSystem = () => {
   const [searchParams] = useSearchParams();
   const batch_id = searchParams.get("batch_id") || "BDG-2026-03-001";
+  const qr_id = searchParams.get("qr") || "1"; // Default to 1 if not provided
   
   const [rating, setRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [recommended, setRecommended] = useState<boolean | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [location, setLocation] = useState<{city?: string, region?: string, country_name?: string, ip?: string} | null>(null);
 
   // Always visible in Hero section
   useEffect(() => {
     setIsVisible(true);
     console.log("ReviewSystem v3: Component initialized. Batch ID:", batch_id);
+
+    // Fetch approximate location (IP-based)
+    const fetchLocation = async () => {
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        if (res.ok) {
+          const data = await res.json();
+          setLocation(data);
+          console.log("ReviewSystem: Location detected:", data.city, data.country_name);
+        }
+      } catch (err) {
+        console.error("Failed to detect location:", err);
+      }
+    };
+    fetchLocation();
   }, [batch_id]);
 
   const handleSubmit = async () => {
     if (rating === null || recommended === null) return;
 
-    console.log("ReviewSystem v3: Submitting review...", { batch_id, rating, recommended });
+    console.log("ReviewSystem v3: Submitting review...", { batch_id, qr_id, rating, recommended });
     // Instant success state (as per UX rules)
     setIsSubmitted(true);
 
@@ -32,8 +49,13 @@ const ReviewSystem = () => {
       const { error } = await supabase.from("reviews").insert([
           {
             batch_id,
+            qr_id,
             rating,
             recommended,
+            ip_address: location?.ip,
+            location_city: location?.city,
+            location_region: location?.region,
+            location_country: location?.country_name,
           },
         ]);
       if (error) {
@@ -54,7 +76,7 @@ const ReviewSystem = () => {
   return (
     <section 
       id="review-section"
-      className="relative py-20 px-4 overflow-hidden flex flex-col items-center justify-center min-h-[90vh] sm:min-h-[85vh]"
+      className="relative px-4 overflow-hidden flex flex-col items-center justify-center min-h-screen"
       style={{ backgroundColor: "transparent" }}
     >
       <AnimatePresence>
@@ -64,10 +86,10 @@ const ReviewSystem = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-xl flex flex-col items-center space-y-12"
+            className="w-full max-w-xl flex flex-col items-center space-y-6 sm:space-y-10 pb-32 sm:pb-40"
           >
             {/* Title */}
-            <h1 className="text-4xl sm:text-7xl font-bold tracking-tight text-slate-900 text-center leading-tight">
+            <h1 className="text-3xl sm:text-7xl font-bold tracking-tight text-slate-900 text-center leading-tight">
               Your cup. <br />
               <span className="text-tea-gold">Your opinion.</span>
             </h1>
@@ -135,7 +157,7 @@ const ReviewSystem = () => {
               onClick={handleSubmit}
               whileHover={isButtonEnabled ? { scale: 1.05 } : {}}
               whileTap={isButtonEnabled ? { scale: 0.95 } : {}}
-              className={`mt-4 sm:mt-10 px-12 py-4 sm:px-16 sm:py-5 rounded-full font-bold uppercase tracking-widest transition-all duration-500 w-full sm:w-auto ${
+              className={`mt-4 sm:mt-6 px-12 py-4 sm:px-16 sm:py-5 rounded-full font-bold uppercase tracking-widest transition-all duration-500 w-full sm:w-auto ${
                 isButtonEnabled
                   ? "bg-slate-900 text-white shadow-lg opacity-100 cursor-pointer hover:bg-slate-800"
                   : "bg-slate-100 text-slate-500 cursor-not-allowed opacity-50 border border-slate-200"
@@ -144,31 +166,36 @@ const ReviewSystem = () => {
               Submit Feedback
             </motion.button>
 
-            {/* Scroll indicator (opening page) */}
+          </motion.div>
+        )}
+
+        {/* Unified Scroll Indicator - outside the flex flow to stay at bottom */}
+        {isVisible && (
+          <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.8 }}
-              className="pt-8 sm:pt-20 flex flex-col items-center gap-4"
+              transition={{ duration: 1, delay: isSubmitted ? 0.5 : 0.8 }}
+              className="flex flex-col items-center gap-2 sm:gap-4"
             >
-              <motion.span 
-                animate={{ opacity: [0.6, 1, 0.6] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="text-[10px] sm:text-xs font-semibold tracking-[0.3em] uppercase text-slate-600"
-              >
-                Scroll to Explore
-              </motion.span>
-              
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="flex flex-col items-center gap-2"
-              >
-                <div className="w-px h-8 sm:h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
-                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-tea-gold/60" />
-              </motion.div>
+            <motion.span 
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="text-[9px] sm:text-xs font-semibold tracking-[0.3em] uppercase text-slate-500 whitespace-nowrap"
+            >
+              Scroll to Explore
+            </motion.span>
+            
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="w-px h-6 sm:h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
+              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-tea-gold/60" />
             </motion.div>
           </motion.div>
+          </div>
         )}
 
         {isSubmitted && (
@@ -193,30 +220,6 @@ const ReviewSystem = () => {
               Thank you for your feedback
             </h3>
 
-            {/* Added Scroll to Explore wording here as well */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="pt-8 sm:pt-16 flex flex-col items-center gap-4"
-            >
-              <motion.span 
-                animate={{ opacity: [0.6, 1, 0.6] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="text-[10px] sm:text-xs font-semibold tracking-[0.3em] uppercase text-slate-600"
-              >
-                Scroll to Explore
-              </motion.span>
-              
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="flex flex-col items-center gap-2"
-              >
-                <div className="w-px h-8 sm:h-12 bg-gradient-to-b from-tea-gold/80 via-tea-gold/40 to-transparent" />
-                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-tea-gold/60" />
-              </motion.div>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -16,18 +16,18 @@ These are the premium-branded QR codes designed for the Basilur experience.
 ---
 
 ### 📲 Functional Scannable Links
-Use these functional QR codes for real-world testing. They point to `https://feadback.pipisara.me/`.
+Use these functional QR codes for real-world testing. They point to `https://feedback.pipisara.me/`.
 
 | Identifier | Purpose | Direct Link | Functional QR (Scan Me) |
 | :--- | :--- | :--- | :---: |
-| **Source 1** | Primary Retail Store | [Go to Link](https://feadback.pipisara.me/?qr=1) | ![QR1](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feadback.pipisara.me/?qr=1) |
-| **Source 2** | Secondary Outlet | [Go to Link](https://feadback.pipisara.me/?qr=2) | ![QR2](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feadback.pipisara.me/?qr=2) |
-| **Source 3** | Promotional Events | [Go to Link](https://feadback.pipisara.me/?qr=3) | ![QR3](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feadback.pipisara.me/?qr=3) |
-| **Source 4** | Online Feedback | [Go to Link](https://feadback.pipisara.me/?qr=4) | ![QR4](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feadback.pipisara.me/?qr=4) |
-| **Source 5** | Partner Lounges | [Go to Link](https://feadback.pipisara.me/?qr=5) | ![QR5](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feadback.pipisara.me/?qr=5) |
+| **Source 1** | Primary Retail Store | [Go to Link](https://feedback.pipisara.me/?qr=1) | ![QR1](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feedback.pipisara.me/?qr=1) |
+| **Source 2** | Secondary Outlet | [Go to Link](https://feedback.pipisara.me/?qr=2) | ![QR2](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feedback.pipisara.me/?qr=2) |
+| **Source 3** | Promotional Events | [Go to Link](https://feedback.pipisara.me/?qr=3) | ![QR3](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feedback.pipisara.me/?qr=3) |
+| **Source 4** | Online Feedback | [Go to Link](https://feedback.pipisara.me/?qr=4) | ![QR4](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feedback.pipisara.me/?qr=4) |
+| **Source 5** | Partner Lounges | [Go to Link](https://feedback.pipisara.me/?qr=5) | ![QR5](https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://feedback.pipisara.me/?qr=5) |
 
 > [!TIP]
-> To update the URL, simply replace `feadback.pipisara.me` in the link and image source URL in this file.
+> To update the URL, simply replace `feedback.pipisara.me` in the link and image source URL in this file.
 
 ## 🚀 Key Features
 - **Premium Scrollytelling:** Immersive 120-frame image sequence animation.

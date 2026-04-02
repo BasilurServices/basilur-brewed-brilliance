@@ -99,9 +99,9 @@ const ReviewSystem = () => {
             className="w-full max-w-xl flex flex-col items-center space-y-6 sm:space-y-10 pb-44 sm:pb-48"
           >
             {/* Title */}
-            <h1 className="text-3xl sm:text-7xl font-bold tracking-tight text-slate-900 text-center leading-tight">
-              Your cup. <br />
-              <span className="text-tea-gold">Your opinion.</span>
+            <h1 className="text-3xl sm:text-7xl font-bold tracking-tight text-slate-900 text-center leading-tight sm:mt-8">
+              <span className="block sm:mb-6">Your cup.</span>
+              <span className="text-tea-gold block">Your opinion.</span>
             </h1>
 
             {/* Star Rating */}
